@@ -24,8 +24,11 @@ public class ImageController {
 
     @PostMapping("/search")
     @ResponseStatus(HttpStatus.OK)
-    public List<SearchResultDTO> searchMatches(@RequestParam("image") MultipartFile file, @RequestParam(value = "threshold", defaultValue = "0.9") double threshold) {
-        return null;
+    public List<SearchResultDTO> searchMatches(
+            @RequestParam("image") MultipartFile file,
+            @RequestParam(value = "threshold",
+                    defaultValue = "0.9") double threshold) {
+        return service.searchImages(file, threshold);
     }
 
     @DeleteMapping("/{id}")

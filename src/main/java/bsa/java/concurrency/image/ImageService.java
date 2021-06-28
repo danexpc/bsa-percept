@@ -1,6 +1,7 @@
 package bsa.java.concurrency.image;
 
 import bsa.java.concurrency.fs.FileSystemService;
+import bsa.java.concurrency.image.dto.SearchResultDTO;
 import bsa.java.concurrency.image.hash.DHasher;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -39,5 +41,12 @@ public class ImageService {
                         .hash(hash)
                         .path(pathToImage)
                         .build());
+    }
+
+    @SneakyThrows
+    public List<SearchResultDTO> searchImages(MultipartFile file, double threshold) {
+        var hash = hasher.calculateHash(file.getBytes());
+        var images = repository.findAllByHash(hash, threshold);
+        return images;
     }
 }
