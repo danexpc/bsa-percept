@@ -47,6 +47,11 @@ public class ImageService {
     public List<SearchResultDTO> searchImages(MultipartFile file, double threshold) {
         var hash = hasher.calculateHash(file.getBytes());
         var images = repository.findAllByHash(hash, threshold);
-        return images;
+        if (!images.isEmpty()) {
+            return images;
+        }
+
+        uploadImage(file);
+        return List.of();
     }
 }
