@@ -3,6 +3,7 @@ package bsa.java.concurrency.fs;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -11,6 +12,10 @@ public class FileSystemService {
 
     @Autowired
     private FileSystem repository;
+
+    public byte[] getFileByName(String name) {
+        return repository.getByName(name);
+    }
 
     @SneakyThrows
     public String saveFile(UUID name, byte[] file) {
