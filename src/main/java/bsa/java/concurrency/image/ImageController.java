@@ -40,5 +40,6 @@ public class ImageController {
     @DeleteMapping("/purge")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void purgeImages() {
+        service.deleteAllImages();
     }
 }

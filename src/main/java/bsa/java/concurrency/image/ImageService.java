@@ -59,4 +59,9 @@ public class ImageService {
         repository.deleteById(imageId);
         fsService.deleteFileByName(imageId);
     }
+
+    public void deleteAllImages() {
+        repository.deleteAll();
+        fsService.deleteAllFiles();
+    }
 }

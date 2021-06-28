@@ -20,4 +20,8 @@ public class FileSystemService {
     public void deleteFileByName(UUID name) {
         repository.deleteByName(name);
     }
+
+    public void deleteAllFiles() {
+        repository.deleteAll();
+    }
 }
