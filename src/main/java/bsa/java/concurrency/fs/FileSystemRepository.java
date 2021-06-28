@@ -5,9 +5,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Iterator;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -42,8 +45,10 @@ public class FileSystemRepository implements FileSystem {
     @Override
     @SneakyThrows
     public void deleteAll() {
-        try (Stream<Path> walk = Files.walk(pathToStorage)) {
-            walk.map(Path::toFile).forEach(File::delete);
+        try (var paths = Files.newDirectoryStream(pathToStorage)) {
+            for (Path path : paths) {
+                Files.delete(path);
+            }
         }
     }
 
