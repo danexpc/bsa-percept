@@ -9,9 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 @Log4j2
@@ -23,23 +26,25 @@ public class ImageService {
     @Autowired
     private ImageRepository repository;
 
+    private final ExecutorService executor = Executors.newFixedThreadPool(10);
+
     private final DHasher hasher = new DHasher();
 
     public void uploadImages(MultipartFile[] files) {
-        Arrays.stream(files).forEach(this::uploadImage);
+        Arrays.stream(files).forEach(file -> executor.execute(() -> this.uploadImage(file)));
     }
 
     @SneakyThrows
     private void uploadImage(MultipartFile file) {
         var bytes = file.getBytes();
         var uuid = UUID.randomUUID();
-        var pathToImage = fsService.saveFile(uuid, bytes);
-        var hash = hasher.calculateHash(bytes);
+        var hash = executor.submit(() -> hasher.calculateHash(bytes));
+        var pathToImage = executor.submit(() -> fsService.saveFile(uuid, bytes));
         repository.save(
                 Image.builder()
                         .id(uuid)
-                        .hash(hash)
-                        .path(pathToImage)
+                        .hash(hash.get())
+                        .path(pathToImage.get())
                         .build());
     }
 
@@ -51,13 +56,19 @@ public class ImageService {
             return images;
         }
 
-        saveImage(file, hash);
+        executor.execute(() -> {
+            try {
+                saveImage(file.getBytes(), hash);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
         return List.of();
     }
 
     @SneakyThrows
-    private void saveImage(MultipartFile file, long hash) {
-        var bytes = file.getBytes();
+    private void saveImage(byte[] bytes, long hash) {
         var uuid = UUID.randomUUID();
         var pathToImage = fsService.saveFile(uuid, bytes);
         repository.save(
