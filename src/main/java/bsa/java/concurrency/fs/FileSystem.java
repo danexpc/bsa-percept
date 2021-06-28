@@ -11,5 +11,7 @@ public interface FileSystem {
     CompletableFuture<String> saveFile(UUID id, byte[] file);
 
     void deleteByName(UUID name);
+
+    void deleteAll();
     //TODO: Add extra methods here
 }

@@ -4,11 +4,13 @@ import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 @Repository
 public class FileSystemRepository implements FileSystem {
@@ -34,6 +36,15 @@ public class FileSystemRepository implements FileSystem {
     @SneakyThrows
     public void deleteByName(UUID name) {
         Files.delete(Path.of(pathToStorage.toString(), name + ".jpg"));
+    }
+
+
+    @Override
+    @SneakyThrows
+    public void deleteAll() {
+        try (Stream<Path> walk = Files.walk(pathToStorage)) {
+            walk.map(Path::toFile).forEach(File::delete);
+        }
     }
 
     @SneakyThrows
