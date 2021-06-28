@@ -7,10 +7,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -30,13 +27,12 @@ public class ImageService {
 
     private final DHasher hasher = new DHasher();
 
-    public void uploadImages(MultipartFile[] files) {
-        Arrays.stream(files).forEach(file -> executor.execute(() -> this.uploadImage(file)));
+    public void uploadImages(List<byte[]> files) {
+        files.forEach(file -> executor.execute(() -> this.uploadImage(file)));
     }
 
     @SneakyThrows
-    private void uploadImage(MultipartFile file) {
-        var bytes = file.getBytes();
+    private void uploadImage(byte[] bytes) {
         var uuid = UUID.randomUUID();
         var hash = executor.submit(() -> hasher.calculateHash(bytes));
         var pathToImage = executor.submit(() -> fsService.saveFile(uuid, bytes));
@@ -49,20 +45,14 @@ public class ImageService {
     }
 
     @SneakyThrows
-    public List<SearchResultDTO> searchImages(MultipartFile file, double threshold) {
-        var hash = hasher.calculateHash(file.getBytes());
+    public List<SearchResultDTO> searchImages(byte[] file, double threshold) {
+        var hash = hasher.calculateHash(file);
         var images = repository.findAllByHash(hash, threshold);
         if (!images.isEmpty()) {
             return images;
         }
 
-        executor.execute(() -> {
-            try {
-                saveImage(file.getBytes(), hash);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+        executor.execute(() -> saveImage(file, hash));
 
         return List.of();
     }
