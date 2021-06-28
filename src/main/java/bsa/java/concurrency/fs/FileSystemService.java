@@ -13,7 +13,7 @@ public class FileSystemService {
     private FileSystem repository;
 
     @SneakyThrows
-    public String saveFile(UUID id, byte[] file) {
-        return repository.saveFile(id, file).get();
+    public String saveFile(UUID name, byte[] file) {
+        return repository.saveFile(name, file).get();
     }
 }
