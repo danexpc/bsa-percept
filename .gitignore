@@ -33,5 +33,5 @@ out/
 ### VS Code ###
 .vscode/
 ### static folder
-/images/
+/files/
 static/
