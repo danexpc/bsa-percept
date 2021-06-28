@@ -1,5 +1,7 @@
 package bsa.java.concurrency.fs;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -8,6 +10,8 @@ import java.util.concurrent.CompletableFuture;
 // При работе с файловой системой вы можете использовать блокирующие вызовы, просто оберните результат в CompletableFuture
 public interface FileSystem {
     //TODO: Можете изменить сигнатуру метода, она здесь в качестве примера
+    byte[] getByName(String name);
+
     CompletableFuture<String> saveFile(UUID id, byte[] file);
 
     void deleteByName(UUID name);

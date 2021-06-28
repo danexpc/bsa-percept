@@ -4,21 +4,22 @@ import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
-import java.io.File;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Iterator;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
 
 @Repository
 public class FileSystemRepository implements FileSystem {
 
     private final Path pathToStorage;
+
+    @Override
+    @SneakyThrows
+    public byte[] getByName(String name) {
+        return Files.readAllBytes(Path.of(pathToStorage.toString(), name));
+    }
 
     @SneakyThrows
     public FileSystemRepository(@Value("${application.resources.static-location}") String pathToStorage) {
