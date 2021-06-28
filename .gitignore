@@ -34,3 +34,4 @@ out/
 .vscode/
 ### static folder
 /images/
+static/
