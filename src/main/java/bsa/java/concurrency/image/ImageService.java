@@ -54,4 +54,9 @@ public class ImageService {
         uploadImage(file);
         return List.of();
     }
+
+    public void deleteImageById(UUID imageId) {
+        repository.deleteById(imageId);
+        fsService.deleteFileByName(imageId);
+    }
 }

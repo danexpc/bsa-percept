@@ -16,4 +16,8 @@ public class FileSystemService {
     public String saveFile(UUID name, byte[] file) {
         return repository.saveFile(name, file).get();
     }
+
+    public void deleteFileByName(UUID name) {
+        repository.deleteByName(name);
+    }
 }

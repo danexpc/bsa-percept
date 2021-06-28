@@ -34,7 +34,7 @@ public class ImageController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteImage(@PathVariable("id") UUID imageId) {
-
+        service.deleteImageById(imageId);
     }
 
     @DeleteMapping("/purge")
