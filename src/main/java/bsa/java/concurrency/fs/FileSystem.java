@@ -9,5 +9,7 @@ import java.util.concurrent.CompletableFuture;
 public interface FileSystem {
     //TODO: Можете изменить сигнатуру метода, она здесь в качестве примера
     CompletableFuture<String> saveFile(UUID id, byte[] file);
+
+    void deleteByName(UUID name);
     //TODO: Add extra methods here
 }
