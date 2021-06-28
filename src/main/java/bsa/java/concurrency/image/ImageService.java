@@ -51,8 +51,21 @@ public class ImageService {
             return images;
         }
 
-        uploadImage(file);
+        saveImage(file, hash);
         return List.of();
+    }
+
+    @SneakyThrows
+    private void saveImage(MultipartFile file, long hash) {
+        var bytes = file.getBytes();
+        var uuid = UUID.randomUUID();
+        var pathToImage = fsService.saveFile(uuid, bytes);
+        repository.save(
+                Image.builder()
+                        .id(uuid)
+                        .hash(hash)
+                        .path(pathToImage)
+                        .build());
     }
 
     public void deleteImageById(UUID imageId) {
