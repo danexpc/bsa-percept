@@ -45,7 +45,7 @@ public class ImageService {
 
     private final ExecutorService executor;
 
-    public ImageService(@Value("application.thread-pool-size") Integer poolSize) {
+    public ImageService(@Value("#{new Integer('${application.thread-pool-size}')}") Integer poolSize) {
         executor = Executors.newFixedThreadPool(poolSize);
     }
 
@@ -70,7 +70,6 @@ public class ImageService {
             } else if (hasherMap.containsKey(hasher)) {
                 return hasherMap.get(hasher).calculateHash(bytes);
             }
-
             throw new UnsupportedOperationException();
         });
         var pathToImage = executor.submit(() -> fsService.saveFile(uuid, bytes));
