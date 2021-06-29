@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 
-public class DHasher {
+public class DHasher implements Hasher {
 
     public long calculateHash(byte[] image) {
         try {
