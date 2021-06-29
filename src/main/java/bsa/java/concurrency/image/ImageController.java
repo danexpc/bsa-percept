@@ -1,13 +1,18 @@
 package bsa.java.concurrency.image;
 
+import bsa.java.concurrency.image.dto.ImageDto;
 import bsa.java.concurrency.image.dto.SearchResultDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/image")
@@ -18,8 +23,19 @@ public class ImageController {
 
     @PostMapping("/batch")
     @ResponseStatus(HttpStatus.CREATED)
-    public void batchUploadImages(@RequestParam("images") MultipartFile[] files) {
-        service.uploadImages(files);
+    public List<ImageDto> batchUploadImages(@RequestParam("images") MultipartFile[] files) {
+        List<ImageDto> list = new ArrayList<>();
+        for (Future<ImageDto> imageDtoFuture : service.uploadImages(files)) {
+            ImageDto imageDto;
+            try {
+                imageDto = imageDtoFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                Thread.currentThread().interrupt();
+                throw new ResponseStatusException(HttpStatus.CONFLICT);
+            }
+            list.add(imageDto);
+        }
+        return list;
     }
 
     @PostMapping("/search")

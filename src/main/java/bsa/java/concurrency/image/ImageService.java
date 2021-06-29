@@ -5,6 +5,7 @@ import bsa.java.concurrency.exception.UnavailableResourceException;
 import bsa.java.concurrency.exception.UnsupportedHasherException;
 import bsa.java.concurrency.fs.FileSystemService;
 import bsa.java.concurrency.image.domain.Image;
+import bsa.java.concurrency.image.dto.ImageDto;
 import bsa.java.concurrency.image.dto.SearchResultDto;
 import bsa.java.concurrency.image.hash.Hasher;
 import lombok.SneakyThrows;
@@ -22,6 +23,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -51,20 +54,29 @@ public class ImageService {
         executor = Executors.newFixedThreadPool(poolSize);
     }
 
-    @SneakyThrows
-    public void uploadImages(MultipartFile[] files) {
+    public List<CompletableFuture<ImageDto>> uploadImages(MultipartFile[] files) {
         var hasher = request.getParameter("hasher");
-        Arrays.stream(files).map(file -> {
-            try {
-                return file.getBytes();
-            } catch (IOException e) {
-                throw new UnavailableResourceException("Resource is not available", e.getCause());
-            }
-        }).forEach(file -> executor.execute(() -> this.uploadImage(file, hasher)));
+        return Arrays.stream(files)
+                .map(file -> {
+                    try {
+                        return file.getBytes();
+                    } catch (IOException e) {
+                        throw new UnavailableResourceException("Resource is not available", e.getCause());
+                    }
+                })
+                .map(file -> executor.submit(() -> uploadImage(file, hasher)))
+                .map(future -> {
+                    try {
+                        return future.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        Thread.currentThread().interrupt();
+                        throw new InvalidArgumentException("Exception during processing resource", e.getCause());
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
-    @SneakyThrows
-    private void uploadImage(byte[] bytes, String hasher) {
+    private CompletableFuture<ImageDto> uploadImage(byte[] bytes, String hasher) {
         var uuid = UUID.randomUUID();
         var hash = executor.submit(() -> {
             if (hasher == null) {
@@ -75,12 +87,20 @@ public class ImageService {
             throw new UnsupportedHasherException(String.format("Hasher with name: %s not found", hasher));
         });
         var pathToImage = executor.submit(() -> fsService.saveFile(uuid, bytes));
-        repository.save(
-                Image.builder()
-                        .id(uuid)
-                        .hash(hash.get())
-                        .path(pathToImage.get())
-                        .build());
+        return CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        return ImageDto.fromEntity(repository.save(
+                                Image.builder()
+                                        .id(uuid)
+                                        .hash(hash.get())
+                                        .path(pathToImage.get())
+                                        .build()));
+                    } catch (InterruptedException | ExecutionException e) {
+                        Thread.currentThread().interrupt();
+                        throw new InvalidArgumentException("Exception during processing resource", e.getCause());
+                    }
+                });
     }
 
     public List<SearchResultDto> searchImages(MultipartFile file, double threshold) {
