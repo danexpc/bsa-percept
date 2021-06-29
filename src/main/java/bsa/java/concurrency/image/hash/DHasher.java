@@ -1,11 +1,13 @@
 package bsa.java.concurrency.image.hash;
 
+import bsa.java.concurrency.exception.InvalidArgumentException;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 @Component("dHasher")
 public class DHasher implements Hasher {
@@ -14,8 +16,8 @@ public class DHasher implements Hasher {
         try {
             var img = ImageIO.read(new ByteArrayInputStream(image));
             return calculateDHash(preprocessImage(img));
-        } catch (Exception err) {
-            throw new RuntimeException(err.getMessage());
+        } catch (IOException e) {
+            throw new InvalidArgumentException("Resource is not processable", e.getCause());
         }
     }
 
