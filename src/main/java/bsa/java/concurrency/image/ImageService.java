@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -78,8 +79,8 @@ public class ImageService {
                     .map(image -> new SearchResultDto(
                             image.getImageId(),
                             image.getMatchPercent(),
-                            (ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() +
-                                    "/" + image.getImageUrl()).replace("\\", "/")))
+                            (ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() + "/" +
+                                    image.getImageUrl().replace("\\", "/"))))
                     .collect(Collectors.toList());
         }
 
