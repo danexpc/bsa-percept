@@ -1,10 +1,13 @@
 package bsa.java.concurrency.image.hash;
 
+import org.springframework.stereotype.Component;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 
+@Component("dHasher")
 public class DHasher implements Hasher {
 
     public long calculateHash(byte[] image) {
