@@ -8,7 +8,6 @@ import bsa.java.concurrency.image.domain.Image;
 import bsa.java.concurrency.image.dto.ImageDto;
 import bsa.java.concurrency.image.dto.SearchResultDto;
 import bsa.java.concurrency.image.hash.Hasher;
-import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
