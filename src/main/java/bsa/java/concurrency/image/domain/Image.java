@@ -1,4 +1,4 @@
-package bsa.java.concurrency.image;
+package bsa.java.concurrency.image.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

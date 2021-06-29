@@ -1,7 +1,8 @@
 package bsa.java.concurrency.image;
 
 import bsa.java.concurrency.fs.FileSystemService;
-import bsa.java.concurrency.image.dto.SearchResultDTO;
+import bsa.java.concurrency.image.domain.Image;
+import bsa.java.concurrency.image.dto.SearchResultDto;
 import bsa.java.concurrency.image.hash.DHasher;
 import bsa.java.concurrency.image.hash.Hasher;
 import lombok.SneakyThrows;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -66,12 +69,18 @@ public class ImageService {
     }
 
     @SneakyThrows
-    public List<SearchResultDTO> searchImages(MultipartFile file, double threshold) {
+    public List<SearchResultDto> searchImages(MultipartFile file, double threshold) {
         var bytes = file.getBytes();
         var hash = hasher.calculateHash(bytes);
         var images = repository.findAllByHash(hash, threshold);
         if (!images.isEmpty()) {
-            return images;
+            return images.stream()
+                    .map(image -> new SearchResultDto(
+                            image.getImageId(),
+                            image.getMatchPercent(),
+                            (ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() +
+                                    "/" + image.getImageUrl()).replace("\\", "/")))
+                    .collect(Collectors.toList());
         }
 
         executor.execute(() -> saveImage(bytes, hash));

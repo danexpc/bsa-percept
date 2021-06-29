@@ -1,6 +1,6 @@
 package bsa.java.concurrency.image;
 
-import bsa.java.concurrency.image.dto.SearchResultDTO;
+import bsa.java.concurrency.image.dto.SearchResultDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +24,7 @@ public class ImageController {
 
     @PostMapping("/search")
     @ResponseStatus(HttpStatus.OK)
-    public List<SearchResultDTO> searchMatches(
+    public List<SearchResultDto> searchMatches(
             @RequestParam("image") MultipartFile file,
             @RequestParam(value = "threshold",
                     defaultValue = "0.9") double threshold) {

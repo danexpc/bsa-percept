@@ -1,6 +1,7 @@
 package bsa.java.concurrency.image;
 
-import bsa.java.concurrency.image.dto.SearchResultDTO;
+import bsa.java.concurrency.image.domain.Image;
+import bsa.java.concurrency.image.domain.SearchResult;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -16,5 +17,5 @@ public interface ImageRepository extends JpaRepository<Image, UUID> {
                     "    from images ) imagesWithMatch " +
                     "where match >= :threshold ",
             nativeQuery = true)
-    List<SearchResultDTO> findAllByHash(long hash, double threshold);
+    List<SearchResult> findAllByHash(long hash, double threshold);
 }

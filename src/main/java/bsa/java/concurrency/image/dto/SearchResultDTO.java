@@ -1,9 +1,16 @@
 package bsa.java.concurrency.image.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.UUID;
 
-public interface SearchResultDTO {
-    UUID getImageId();
-    Double getMatchPercent();
-    String getImageUrl();
+@Getter
+@Setter
+@AllArgsConstructor
+public class SearchResultDto {
+    UUID imageId;
+    Double matchPercent;
+    String imageUrl;
 }
