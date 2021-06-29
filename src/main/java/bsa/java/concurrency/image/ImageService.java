@@ -10,7 +10,10 @@ import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -38,8 +41,15 @@ public class ImageService {
         }
     }
 
-    public void uploadImages(List<byte[]> files) {
-        files.forEach(file -> executor.execute(() -> this.uploadImage(file)));
+    @SneakyThrows
+    public void uploadImages(MultipartFile[] files) {
+        Arrays.stream(files).map(file -> {
+            try {
+                return file.getBytes();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }).forEach(file -> executor.execute(() -> this.uploadImage(file)));
     }
 
     @SneakyThrows
@@ -56,14 +66,15 @@ public class ImageService {
     }
 
     @SneakyThrows
-    public List<SearchResultDTO> searchImages(byte[] file, double threshold) {
-        var hash = hasher.calculateHash(file);
+    public List<SearchResultDTO> searchImages(MultipartFile file, double threshold) {
+        var bytes = file.getBytes();
+        var hash = hasher.calculateHash(bytes);
         var images = repository.findAllByHash(hash, threshold);
         if (!images.isEmpty()) {
             return images;
         }
 
-        executor.execute(() -> saveImage(file, hash));
+        executor.execute(() -> saveImage(bytes, hash));
 
         return List.of();
     }
