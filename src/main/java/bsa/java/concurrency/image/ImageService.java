@@ -3,21 +3,21 @@ package bsa.java.concurrency.image;
 import bsa.java.concurrency.fs.FileSystemService;
 import bsa.java.concurrency.image.domain.Image;
 import bsa.java.concurrency.image.dto.SearchResultDto;
-import bsa.java.concurrency.image.hash.DHasher;
 import bsa.java.concurrency.image.hash.Hasher;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,17 +33,16 @@ public class ImageService {
     @Autowired
     private ImageRepository repository;
 
+    @Autowired
+    private Map<String, Hasher> hasherMap;
+
+    @Value("${application.image-hasher}")
+    private String defaultHasher;
+
+    @Autowired
+    HttpServletRequest request;
+
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
-
-    private final Hasher hasher;
-
-    public ImageService(@Value("${application.image-hasher}") String hasherType) {
-        if (hasherType.equals("dHash")) {
-            this.hasher = new DHasher();
-        } else {
-            throw new InvalidPropertyException(ImageService.class, "application.image-hasher", "Unknown image hasher type");
-        }
-    }
 
     @SneakyThrows
     public void uploadImages(MultipartFile[] files) {
@@ -59,7 +58,17 @@ public class ImageService {
     @SneakyThrows
     private void uploadImage(byte[] bytes) {
         var uuid = UUID.randomUUID();
-        var hash = executor.submit(() -> hasher.calculateHash(bytes));
+        var hash = executor.submit(() -> {
+            var hasher = request.getParameter("hasher");
+
+            if (hasher == null) {
+                return hasherMap.get(defaultHasher).calculateHash(bytes);
+            } else if (hasherMap.containsKey(hasher)) {
+                return hasherMap.get(hasher).calculateHash(bytes);
+            }
+
+            throw new UnsupportedOperationException();
+        });
         var pathToImage = executor.submit(() -> fsService.saveFile(uuid, bytes));
         repository.save(
                 Image.builder()
@@ -72,7 +81,15 @@ public class ImageService {
     @SneakyThrows
     public List<SearchResultDto> searchImages(MultipartFile file, double threshold) {
         var bytes = file.getBytes();
-        var hash = hasher.calculateHash(bytes);
+        long hash;
+        var hasher = request.getParameter("hasher");
+        if (hasher == null) {
+            hash =  hasherMap.get(defaultHasher).calculateHash(bytes);
+        } else if (hasherMap.containsKey(hasher)) {
+            hash = hasherMap.get(hasher).calculateHash(bytes);
+        } else {
+            throw new UnsupportedOperationException();
+        }
         var images = repository.findAllByHash(hash, threshold);
         if (!images.isEmpty()) {
             return images.stream()
@@ -101,11 +118,13 @@ public class ImageService {
                         .build());
     }
 
+    @Transactional
     public void deleteImageById(UUID imageId) {
         repository.deleteById(imageId);
         fsService.deleteFileByName(imageId);
     }
 
+    @Transactional
     public void deleteAllImages() {
         repository.deleteAll();
         fsService.deleteAllFiles();
