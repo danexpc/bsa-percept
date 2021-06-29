@@ -14,11 +14,15 @@ public class FileSystemService {
     @Autowired
     private FileSystem repository;
 
+    @SneakyThrows
     public byte[] getFileByName(String name) {
         try {
-            return repository.getByName(name);
-        } catch (RuntimeException e) {
+            return repository.getByName(name).get();
+        } catch (ExecutionException e) {
             throw new InvalidArgumentException(String.format("File with name: %s cannot be read", name), e.getCause());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new InterruptedException(String.format("Getting file with name: %s was interrupted", name));
         }
     }
 

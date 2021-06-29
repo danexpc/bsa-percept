@@ -28,8 +28,8 @@ public class FileSystemRepository implements FileSystem {
 
     @Override
     @SneakyThrows
-    public byte[] getByName(String name) {
-        return Files.readAllBytes(Path.of(pathToStorage.toString(), name));
+    public CompletableFuture<byte[]> getByName(String name) {
+        return CompletableFuture.supplyAsync(() -> supplyGetByName(name));
     }
 
     @Override
@@ -59,5 +59,10 @@ public class FileSystemRepository implements FileSystem {
     private String supplySaveToFile(UUID name, byte[] file) {
         return Files.write(Path.of(pathToStorage.toString(), name + fileExtension),
                 file, StandardOpenOption.CREATE).toString();
+    }
+
+    @SneakyThrows
+    private byte[] supplyGetByName(String name) {
+        return Files.readAllBytes(Path.of(pathToStorage.toString(), name));
     }
 }
