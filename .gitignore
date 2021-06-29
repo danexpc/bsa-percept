@@ -35,3 +35,4 @@ out/
 ### static folder
 /files/
 static/
+logs/
