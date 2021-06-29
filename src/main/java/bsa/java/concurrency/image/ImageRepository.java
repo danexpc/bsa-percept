@@ -3,6 +3,7 @@ package bsa.java.concurrency.image;
 import bsa.java.concurrency.image.domain.Image;
 import bsa.java.concurrency.image.domain.SearchResult;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -18,4 +19,11 @@ public interface ImageRepository extends JpaRepository<Image, UUID> {
                     "where match >= :threshold ",
             nativeQuery = true)
     List<SearchResult> findAllByHash(long hash, double threshold);
+
+    @Query(
+            value = "delete from images i where i.id = :id",
+            nativeQuery = true
+    )
+    @Modifying
+    void deleteById(UUID id);
 }
