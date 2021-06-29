@@ -15,11 +15,8 @@ public class FileSystemRepository implements FileSystem {
 
     private final Path pathToStorage;
 
-    @Override
-    @SneakyThrows
-    public byte[] getByName(String name) {
-        return Files.readAllBytes(Path.of(pathToStorage.toString(), name));
-    }
+    @Value("${application.file.extensions}")
+    private String fileExtension;
 
     @SneakyThrows
     public FileSystemRepository(@Value("${application.resources.static-location}") String pathToStorage) {
@@ -29,6 +26,11 @@ public class FileSystemRepository implements FileSystem {
         }
     }
 
+    @Override
+    @SneakyThrows
+    public byte[] getByName(String name) {
+        return Files.readAllBytes(Path.of(pathToStorage.toString(), name));
+    }
 
     @Override
     @SneakyThrows
@@ -39,7 +41,7 @@ public class FileSystemRepository implements FileSystem {
     @Override
     @SneakyThrows
     public void deleteByName(UUID name) {
-        Files.delete(Path.of(pathToStorage.toString(), name + ".jpg"));
+        Files.delete(Path.of(pathToStorage.toString(), name + fileExtension));
     }
 
 
@@ -55,7 +57,7 @@ public class FileSystemRepository implements FileSystem {
 
     @SneakyThrows
     private String supplySaveToFile(UUID name, byte[] file) {
-        return Files.write(Path.of(pathToStorage.toString(), name + ".jpg"),
+        return Files.write(Path.of(pathToStorage.toString(), name + fileExtension),
                 file, StandardOpenOption.CREATE).toString();
     }
 }
