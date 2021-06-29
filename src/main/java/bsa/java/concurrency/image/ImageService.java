@@ -1,5 +1,8 @@
 package bsa.java.concurrency.image;
 
+import bsa.java.concurrency.exception.InvalidArgumentException;
+import bsa.java.concurrency.exception.UnavailableResourceException;
+import bsa.java.concurrency.exception.UnsupportedHasherException;
 import bsa.java.concurrency.fs.FileSystemService;
 import bsa.java.concurrency.image.domain.Image;
 import bsa.java.concurrency.image.dto.SearchResultDto;
@@ -19,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -56,7 +58,7 @@ public class ImageService {
             try {
                 return file.getBytes();
             } catch (IOException e) {
-                throw new IllegalStateException(e);
+                throw new UnavailableResourceException("Resource is not available", e.getCause());
             }
         }).forEach(file -> executor.execute(() -> this.uploadImage(file, hasher)));
     }
@@ -70,7 +72,7 @@ public class ImageService {
             } else if (hasherMap.containsKey(hasher)) {
                 return hasherMap.get(hasher).calculateHash(bytes);
             }
-            throw new UnsupportedOperationException();
+            throw new UnsupportedHasherException(String.format("Hasher with name: %s not found", hasher));
         });
         var pathToImage = executor.submit(() -> fsService.saveFile(uuid, bytes));
         repository.save(
@@ -81,50 +83,61 @@ public class ImageService {
                         .build());
     }
 
-    @SneakyThrows
     public List<SearchResultDto> searchImages(MultipartFile file, double threshold) {
-        var bytes = file.getBytes();
-        long hash;
-        var hasher = request.getParameter("hasher");
-        if (hasher == null) {
-            hash =  hasherMap.get(defaultHasher).calculateHash(bytes);
-        } else if (hasherMap.containsKey(hasher)) {
-            hash = hasherMap.get(hasher).calculateHash(bytes);
-        } else {
-            throw new UnsupportedOperationException();
-        }
-        var images = repository.findAllByHash(hash, threshold);
-        if (!images.isEmpty()) {
-            return images.stream()
-                    .map(image -> new SearchResultDto(
-                            image.getImageId(),
-                            image.getMatchPercent(),
-                            (ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() + "/" +
-                                    image.getImageUrl().replace("\\", "/"))))
-                    .collect(Collectors.toList());
-        }
+        try {
+            var bytes = file.getBytes();
+            long hash;
+            var hasher = request.getParameter("hasher");
+            if (hasher == null) {
+                hash = hasherMap.get(defaultHasher).calculateHash(bytes);
+            } else if (hasherMap.containsKey(hasher)) {
+                hash = hasherMap.get(hasher).calculateHash(bytes);
+            } else {
+                throw new UnsupportedHasherException(String.format("Hasher with name: %s not found", hasher));
+            }
+            var images = repository.findAllByHash(hash, threshold);
+            if (!images.isEmpty()) {
+                return images.stream()
+                        .map(image -> new SearchResultDto(
+                                image.getImageId(),
+                                image.getMatchPercent(),
+                                (ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() + "/" +
+                                        image.getImageUrl().replace("\\", "/"))))
+                        .collect(Collectors.toList());
+            }
 
-        executor.execute(() -> saveImage(bytes, hash));
+            executor.execute(() -> saveImage(bytes, hash));
 
-        return List.of();
+            return List.of();
+        } catch (IOException e) {
+            throw new UnavailableResourceException("Resource is not available", e.getCause());
+        }
     }
 
-    @SneakyThrows
     private void saveImage(byte[] bytes, long hash) {
-        var uuid = UUID.randomUUID();
-        var pathToImage = fsService.saveFile(uuid, bytes);
-        repository.save(
-                Image.builder()
-                        .id(uuid)
-                        .hash(hash)
-                        .path(pathToImage)
-                        .build());
+        try {
+            var uuid = UUID.randomUUID();
+            var pathToImage = fsService.saveFile(uuid, bytes);
+            repository.save(
+                    Image.builder()
+                            .id(uuid)
+                            .hash(hash)
+                            .path(pathToImage)
+                            .build());
+        } catch (RuntimeException e) {
+            throw new InvalidArgumentException("Entity cannot be created", e.getCause());
+        }
     }
 
     @Transactional
     public void deleteImageById(UUID imageId) {
-        repository.deleteById(imageId);
-        fsService.deleteFileByName(imageId);
+        try {
+            repository.deleteById(imageId);
+            fsService.deleteFileByName(imageId);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidArgumentException(String.format("Image with id: %s cannot be deleted", imageId), e.getCause());
+        }
+
     }
 
     @Transactional
