@@ -29,6 +29,7 @@ public class ImageController {
             ImageDto imageDto;
             try {
                 imageDto = imageDtoFuture.get();
+                imageDto.setPath(service.createUrlToImage(imageDto.getPath()));
             } catch (InterruptedException | ExecutionException e) {
                 Thread.currentThread().interrupt();
                 throw new ResponseStatusException(HttpStatus.CONFLICT);

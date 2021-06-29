@@ -95,6 +95,7 @@ public class ImageService {
                                         .hash(hash.get())
                                         .path(pathToImage.get())
                                         .build()));
+
                     } catch (InterruptedException | ExecutionException e) {
                         Thread.currentThread().interrupt();
                         throw new InvalidArgumentException("Exception during processing resource", e.getCause());
@@ -120,8 +121,7 @@ public class ImageService {
                         .map(image -> new SearchResultDto(
                                 image.getImageId(),
                                 image.getMatchPercent(),
-                                (ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() + "/" +
-                                        image.getImageUrl().replace("\\", "/"))))
+                                createUrlToImage(image.getImageUrl())))
                         .collect(Collectors.toList());
             }
 
@@ -163,5 +163,10 @@ public class ImageService {
     public void deleteAllImages() {
         repository.deleteAll();
         fsService.deleteAllFiles();
+    }
+
+    public String createUrlToImage(String relativePath) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() + "/" +
+                relativePath.replace("\\", "/");
     }
 }
