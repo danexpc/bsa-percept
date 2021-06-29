@@ -1,10 +1,12 @@
 package bsa.java.concurrency.fs;
 
+import bsa.java.concurrency.exception.InvalidArgumentException;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class FileSystemService {
@@ -13,16 +15,32 @@ public class FileSystemService {
     private FileSystem repository;
 
     public byte[] getFileByName(String name) {
-        return repository.getByName(name);
+        try {
+            return repository.getByName(name);
+        } catch (RuntimeException e) {
+            throw new InvalidArgumentException(String.format("File with name: %s cannot be read", name), e.getCause());
+        }
     }
 
     @SneakyThrows
     public String saveFile(UUID name, byte[] file) {
-        return repository.saveFile(name, file).get();
+        try {
+            return repository.saveFile(name, file).get();
+        } catch (ExecutionException e) {
+            throw new InvalidArgumentException(String.format("File with name: %s cannot be created", name), e.getCause());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new InterruptedException(String.format("Saving file with name: %s was interrupted", name));
+        }
     }
 
     public void deleteFileByName(UUID name) {
-        repository.deleteByName(name);
+        try {
+            repository.deleteByName(name);
+        } catch (RuntimeException e) {
+            throw new InvalidArgumentException(String.format("File with name: %s cannot be deleted", name), e.getCause());
+        }
+
     }
 
     public void deleteAllFiles() {
