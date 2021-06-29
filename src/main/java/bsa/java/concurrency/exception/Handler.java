@@ -12,8 +12,11 @@ import java.util.Map;
 @Log4j2
 public class Handler extends ResponseEntityExceptionHandler {
 
+    public static final String DEFAULT_MESSAGE_TEMPLATE = "Exception[{}]: '{}' with cause = {}\n Displaying stack trace:\n{}";
+
     @ExceptionHandler(InvalidArgumentException.class)
     public ResponseEntity<Object> handleInvalidArgumentException(InvalidArgumentException e) {
+        log.error(DEFAULT_MESSAGE_TEMPLATE, e.getClass(), e.getMessage(), e.getCause() != null ? e.getCause() : "NULL", e.getStackTrace());
         return ResponseEntity
                 .unprocessableEntity()
                 .body(
@@ -25,11 +28,13 @@ public class Handler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Object> handleEntityNotFoundException(EntityNotFoundException e) {
+        log.error(DEFAULT_MESSAGE_TEMPLATE, e.getClass(), e.getMessage(), e.getCause() != null ? e.getCause() : "NULL", e.getStackTrace());
         return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(UnavailableResourceException.class)
     public ResponseEntity<Object> handleUnavailableResourceException(UnavailableResourceException e) {
+        log.error(DEFAULT_MESSAGE_TEMPLATE, e.getClass(), e.getMessage(), e.getCause() != null ? e.getCause() : "NULL", e.getStackTrace());
         return ResponseEntity
                 .unprocessableEntity()
                 .body(
@@ -41,6 +46,7 @@ public class Handler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(UnsupportedHasherException.class)
     public ResponseEntity<Object> handleUnsupportedHasherException(UnsupportedHasherException e) {
+        log.error(DEFAULT_MESSAGE_TEMPLATE, e.getClass(), e.getMessage(), e.getCause() != null ? e.getCause() : "NULL", e.getStackTrace());
         return ResponseEntity
                 .unprocessableEntity()
                 .body(
