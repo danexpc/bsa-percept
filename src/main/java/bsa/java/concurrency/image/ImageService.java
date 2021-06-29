@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -42,7 +43,11 @@ public class ImageService {
     @Autowired
     HttpServletRequest request;
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(10);
+    private final ExecutorService executor;
+
+    public ImageService(@Value("application.thread-pool-size") Integer poolSize) {
+        executor = Executors.newFixedThreadPool(poolSize);
+    }
 
     @SneakyThrows
     public void uploadImages(MultipartFile[] files) {
