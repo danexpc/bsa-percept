@@ -36,7 +36,7 @@ public class ImageService {
     @Autowired
     private Map<String, Hasher> hasherMap;
 
-    @Value("${application.image-hasher}")
+    @Value("${application.default-hasher}")
     private String defaultHasher;
 
     @Autowired
@@ -46,21 +46,20 @@ public class ImageService {
 
     @SneakyThrows
     public void uploadImages(MultipartFile[] files) {
+        var hasher = request.getParameter("hasher");
         Arrays.stream(files).map(file -> {
             try {
                 return file.getBytes();
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
-        }).forEach(file -> executor.execute(() -> this.uploadImage(file)));
+        }).forEach(file -> executor.execute(() -> this.uploadImage(file, hasher)));
     }
 
     @SneakyThrows
-    private void uploadImage(byte[] bytes) {
+    private void uploadImage(byte[] bytes, String hasher) {
         var uuid = UUID.randomUUID();
         var hash = executor.submit(() -> {
-            var hasher = request.getParameter("hasher");
-
             if (hasher == null) {
                 return hasherMap.get(defaultHasher).calculateHash(bytes);
             } else if (hasherMap.containsKey(hasher)) {
