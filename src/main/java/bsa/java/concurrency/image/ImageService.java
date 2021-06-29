@@ -3,9 +3,12 @@ package bsa.java.concurrency.image;
 import bsa.java.concurrency.fs.FileSystemService;
 import bsa.java.concurrency.image.dto.SearchResultDTO;
 import bsa.java.concurrency.image.hash.DHasher;
+import bsa.java.concurrency.image.hash.Hasher;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,7 +28,15 @@ public class ImageService {
 
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
 
-    private final DHasher hasher = new DHasher();
+    private final Hasher hasher;
+
+    public ImageService(@Value("${application.image-hasher}") String hasherType) {
+        if (hasherType.equals("dHash")) {
+            this.hasher = new DHasher();
+        } else {
+            throw new InvalidPropertyException(ImageService.class, "application.image-hasher", "Unknown image hasher type");
+        }
+    }
 
     public void uploadImages(List<byte[]> files) {
         files.forEach(file -> executor.execute(() -> this.uploadImage(file)));
