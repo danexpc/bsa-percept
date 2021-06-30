@@ -5,7 +5,6 @@ import bsa.java.concurrency.exception.UnavailableResourceException;
 import bsa.java.concurrency.exception.UnsupportedHasherException;
 import bsa.java.concurrency.fs.FileSystemService;
 import bsa.java.concurrency.image.domain.Image;
-import bsa.java.concurrency.image.dto.ImageDto;
 import bsa.java.concurrency.image.dto.SearchResultDto;
 import bsa.java.concurrency.image.hash.Hasher;
 import lombok.extern.log4j.Log4j2;
@@ -53,7 +52,7 @@ public class ImageService {
         executor = Executors.newFixedThreadPool(poolSize);
     }
 
-    public List<CompletableFuture<ImageDto>> uploadImages(MultipartFile[] files) {
+    public List<CompletableFuture<Image>> uploadImages(MultipartFile[] files) {
         var hasher = request.getParameter("hasher");
         return Arrays.stream(files)
                 .map(file -> {
@@ -75,7 +74,7 @@ public class ImageService {
                 .collect(Collectors.toList());
     }
 
-    private CompletableFuture<ImageDto> uploadImage(byte[] bytes, String hasher) {
+    private CompletableFuture<Image> uploadImage(byte[] bytes, String hasher) {
         var uuid = UUID.randomUUID();
         var hash = executor.submit(() -> {
             if (hasher == null) {
@@ -89,13 +88,12 @@ public class ImageService {
         return CompletableFuture
                 .supplyAsync(() -> {
                     try {
-                        return ImageDto.fromEntity(repository.save(
+                        return repository.save(
                                 Image.builder()
                                         .id(uuid)
                                         .hash(hash.get())
                                         .path(pathToImage.get())
-                                        .build()));
-
+                                        .build());
                     } catch (InterruptedException | ExecutionException e) {
                         Thread.currentThread().interrupt();
                         throw new InvalidArgumentException("Exception during processing resource", e.getCause());
