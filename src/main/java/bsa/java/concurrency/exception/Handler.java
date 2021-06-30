@@ -10,7 +10,7 @@ import java.util.Map;
 
 @ControllerAdvice
 @Log4j2
-public class Handler extends ResponseEntityExceptionHandler {
+public final class Handler extends ResponseEntityExceptionHandler {
 
     public static final String DEFAULT_MESSAGE_TEMPLATE = "Exception[{}]: '{}' with cause = {}\n Displaying stack trace:\n{}";
 
