@@ -1,4 +1,4 @@
-# bsa-percept
+# BSA Percept
  The web service to search for similar images.
 
   The service supports 4 operations:
